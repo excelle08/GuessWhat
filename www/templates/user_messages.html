@@ -1,64 +1,11 @@
 {% extends '__base.html' %}
 
-{% block title %}Avatar{% endblock %}
+{% block title %}Messages{% endblock %}
 
 {% block beforehead %}
 
 <script type="text/javascript">
-	var imgcontent = ''
-	$(function() {
-    var entryContentWidth = $('.row').width();
-
-    $('.entry-content img').on('load', function(){
-        if($(this).width() > entryContentWidth) {
-            $(this).width('100%');
-        }
-    });
-});
-	function previewImage()
-	{
-		var preview = document.querySelector('img');
-		var file = document.querySelector('input[type=file]').files[0];
-		var reader = new FileReader();
-
-		reader.onloadend = function(){
-			preview.src = reader.result;
-			imgcontent = preview.src
-		}
-		if(file)
-		{
-			reader.readAsDataURL(file);
-		}
-	}
-
-	$(function(){
-	var vm = new Vue({
-		el: '#form-avatar',
-		data:{
-			content: ''
-		},
-		methods: {
-			submit: function(event){
-				if (!imgcontent){
-					return showError('');
-				}
-				event.preventDefault();
-				showError();
-				startLoading();
-				postApi('/api/avatar', {
-					content: imgcontent
-				}, function(err, result){
-					if(err){
-						showError(err);
-					} else {
-						return location.assign('/');
-					}
-					stopLoading();
-				});
-			}
-		}
-	});
-});
+	
 
 </script>
 
@@ -70,11 +17,11 @@
 	<div class="uk-nav-side uk-nav" data-uk-nav="">
 		<li class="uk-nav-header">User Settings</li>
 		<li><a href='/user/basicinfo'>Basic Information</a></li>
-		<li class="uk-active"><a href='/user/avatar'>Change your avatar</a></li>
+		<li><a href='/user/avatar'>Change your avatar</a></li>
 		<li><a href='/user/ext'>Complete your profile</a></li>
 		<li class="uk-nav-divider"></li>
 		<li class="uk-nav-header">Relationships</li>
-		<li><a href="/peer/messages">Messages</a></li>
+		<li class="uk-active"><a href="/peer/messages">Messages</a></li>
 		<li><a href="/peer/friends">Friends</a></li>
 		<li><a href="/peer/blocked">Blocked</a></li>
 		<li class="uk-nav-divider"></li>

@@ -1,10 +1,11 @@
+# -*- coding:utf-8 -*-
 __author__ = 'Excelle'
 
 
 from core.web import get, view, post, ctx, interceptor, SeeOther, NotFound
-from model import User, PeerList, UserExt
+from model import User, PeerList, UserExt, Message
 from config.config import configs
-from apis import api
+from apis import api, Page
 from apis import APIError, APIPermissionError, APIResourceNotFoundError, APIValueError
 from imgsaver import parseImage
 import re, time, logging, string
@@ -13,15 +14,17 @@ import captcha
 
 _RE_MD5 = re.compile(r'^[0-9a-fA-F]{32}$')
 _RE_EMAIL = re.compile(r'^[\w\.\-]+@[\w\-]+(\.[\w\-]+){1,4}$')
-_RE_TEXT = re.compile(r'^[\w\s\.\-/\u0391-\uFFE5]+$')
+_RE_TEXT = re.compile(r'^[\u0391-\uFFE5\w\s\.\-/]+$', flags=re.UNICODE)
 _COOKIE_NAME = 'atomsession'
 _COOKIE_KEY = configs.session.secret
+
 
 # Create a session cookie
 def make_signed_cookie(id, password, max_age):
     expires = str(int(time.time() + (max_age or 86400)))
     L = [id, expires, hashlib.md5('%s-%s-%s-%s' % (id, password, expires, _COOKIE_KEY)).hexdigest()]
     return '-'.join(L)
+
 
 # Identify a retrieved cookie
 def parse_signed_cookie(cookie_str):
@@ -42,8 +45,10 @@ def parse_signed_cookie(cookie_str):
         logging.info(e.message)
         return None
 
+
 # Filter illegal character to avoid XSS risk
 def validSecureData(data, field='the field'):
+    data = data.encode('utf-8')
     result = _RE_TEXT.match(data)
     if data == '':
         return data
@@ -51,6 +56,24 @@ def validSecureData(data, field='the field'):
         return data
     else:
         raise APIValueError('text', message='Illegal character in ' + field)
+
+
+def _get_page_index():
+    page_index = 1
+    try:
+        page_index = int(ctx.request.get('page', '1'))
+    except ValueError:
+        pass
+    return page_index
+
+
+def check_admin():
+    user = ctx.request.user
+    if user and user.t_admin:
+        return
+    else:
+        raise APIPermissionError('Access Denied.')
+
 
 @interceptor('/')
 def user_interceptor(next):
@@ -69,6 +92,7 @@ def user_interceptor(next):
     return next()
 
 @interceptor('/admin')
+@interceptor('/admin/')
 def admin_interceptor(next):
     user = ctx.request.user
     if user and user.t_privilege > 2:
@@ -170,6 +194,54 @@ def edit_extinfo():
     user_info.update()
     return dict(user=user_info, usrext=user_ext)
 
+@api
+@post('/api/password')
+def edit_password():
+    i = ctx.request.input()
+    captcha = ctx.captcha
+    old_password = i.old_pw
+    new_password = i.new_pw
+    if captcha.lower() != i.captcha:
+        raise APIValueError('captcha', message='Captcha is incorrect.')
+    if old_password != ctx.request.user.t_password:
+        raise APIValueError('org_pwd', message='Your original password is wrong.')
+    u = ctx.request.user
+    u.t_password = new_password
+    u.update()
+    return dict()
+
+@api
+@post('/api/message/send')
+def send_message():
+    i = ctx.request.input(t_to='', t_from='', t_content='')
+    to_id = i.t_to
+    from_id = i.t_from
+    content = i.t_content
+    msg = Message(t_to=to_id, t_from=from_id, t_content=content, t_read=0, t_time=time.time())
+    msg.insert()
+    return dict()
+
+@api
+@get('/api/message/recv')
+def receive_message():
+    user = ctx.request.user
+    if not user:
+        return dict()
+    uid = user.t_uid
+    total = Message.count_by('where t_to=?', uid)
+    page = Page(total, page_index=_get_page_index())
+    msg_list = Message.find_by('where t_to=? order by t_time desc limit ?,?', uid, page.offset, page.limit)
+    return dict(messages=msg_list, page=page)
+
+@api
+@get('/api/usrlist')
+def get_user_list():
+    check_admin()
+    total = User.count_all()
+    page = Page(total, page_index=_get_page_index())
+    user_list = User.find_by('order by t_created_at desc limit ?,?', page.offset, page.limit)
+    return dict(users=user_list, page=page)
+
 
 @get('/api/captcha')
 def get_captcha():
@@ -214,3 +286,8 @@ def edit_avatar():
 @get('/user/ext')
 def edit_extension():
     return dict(user=ctx.request.user, usrext=ctx.request.usrext)
+
+@view('user_pwd.html')
+@get('/user/password')
+def change_password():
+    return dict()

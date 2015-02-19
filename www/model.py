@@ -36,5 +36,13 @@ class UserExt(Model):
     birthday = FloatField(ddl='real', name='t_birthday')
 
 
+class Message(Model):
+    __table__ = 'a_msg'
+    t_to = IntegerField(primary_key=True, nullable=False, ddl='int(10)')
+    t_from = IntegerField(nullable=False, ddl='int(10)')
+    t_content = TextField()
+    t_read = IntegerField(ddl='tinyint(1)', default=0)
+
+
 def GetUIDLists(lst):
     return split(';', lst)

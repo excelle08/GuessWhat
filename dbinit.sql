@@ -29,5 +29,14 @@ create table a_peerlist (
 
 create table a_usrext (
     `t_uid` int(10) not null primary key,
-    `t_credits` int(10)
+    `t_credits` int(10),
+    `t_birthday` real
+) engine=innodb default charset=utf8;
+
+create table a_msg (
+    `t_to` int(10) not null primary key,
+    `t_from` int(10) not null,
+    `t_content` text not null,
+    `t_read` tinyint(1),
+    `t_time` real
 ) engine=innodb default charset=utf8;
