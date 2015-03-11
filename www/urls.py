@@ -213,11 +213,13 @@ def edit_password():
 @api
 @post('/api/message/send')
 def send_message():
-    i = ctx.request.input(t_to='', t_from='', t_content='')
-    to_id = i.t_to
-    from_id = i.t_from
-    content = i.t_content
-    msg = Message(t_to=to_id, t_from=from_id, t_content=content, t_read=0, t_time=time.time())
+    i = ctx.request.input(to='', subject='', content='')
+    user_to = User.find_first('where t_emailaddr=?', i.to0)
+    to_id = user_to.t_uid
+    from_id = ctx.request.user.id
+    subject = validSecureData(i.subject)
+    content = validSecureData(i.content)
+    msg = Message(t_to=to_id, t_from=from_id, t_title=subject, t_content=content, t_read=0, t_time=time.time())
     msg.insert()
     return dict()
 
@@ -231,7 +233,15 @@ def receive_message():
     total = Message.count_by('where t_to=?', uid)
     page = Page(total, page_index=_get_page_index())
     msg_list = Message.find_by('where t_to=? order by t_time desc limit ?,?', uid, page.offset, page.limit)
-    return dict(messages=msg_list, page=page)
+    messages = list()
+    for m in msg_list:
+        u = User.find_first('where t_uid=?', m.t_from)
+        m.t_from = u.t_username
+        m['t_fromid'] = u.t_uid
+        m['t_fromemail'] = u.t_emailaddr
+        messages.append(m)
+
+    return dict(messages=messages, page=page)
 
 @api
 @get('/api/usrlist')
@@ -241,7 +251,6 @@ def get_user_list():
     page = Page(total, page_index=_get_page_index())
     user_list = User.find_by('order by t_created_at desc limit ?,?', page.offset, page.limit)
     return dict(users=user_list, page=page)
-
 
 @get('/api/captcha')
 def get_captcha():
@@ -287,7 +296,12 @@ def edit_avatar():
 def edit_extension():
     return dict(user=ctx.request.user, usrext=ctx.request.usrext)
 
+@view('user_messages.html')
+@get('/peer/messages')
+def show_messages():
+    return dict(user=ctx.request.user)
+
 @view('user_pwd.html')
 @get('/user/password')
 def change_password():
-    return dict()
+    return dict(user=ctx.request.user)

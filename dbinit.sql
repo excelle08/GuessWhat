@@ -34,8 +34,10 @@ create table a_usrext (
 ) engine=innodb default charset=utf8;
 
 create table a_msg (
-    `t_to` int(10) not null primary key,
+    `t_id` int(10) not null primary key auto_increment,
+    `t_to` int(10) not null,
     `t_from` int(10) not null,
+    `t_title` varchar(80),
     `t_content` text not null,
     `t_read` tinyint(1),
     `t_time` real

@@ -38,10 +38,13 @@ class UserExt(Model):
 
 class Message(Model):
     __table__ = 'a_msg'
-    t_to = IntegerField(primary_key=True, nullable=False, ddl='int(10)')
+    t_id = IntegerField(primary_key=True, ddl='int(10)', name='t_id')
+    t_to = IntegerField(nullable=False, ddl='int(10)')
     t_from = IntegerField(nullable=False, ddl='int(10)')
+    t_title = StringField(ddl='varchar(80)', name='t_title')
     t_content = TextField()
     t_read = IntegerField(ddl='tinyint(1)', default=0)
+    t_time = FloatField(ddl='real')
 
 
 def GetUIDLists(lst):
