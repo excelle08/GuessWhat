@@ -61,7 +61,7 @@ def validSecureData(data, field='the field'):
 def _get_page_index():
     page_index = 1
     try:
-        page_index = int(ctx.request.get('page', '1'))
+        page_index = int(ctx.request.get('page'))
     except ValueError:
         pass
     return page_index
@@ -214,9 +214,9 @@ def edit_password():
 @post('/api/message/send')
 def send_message():
     i = ctx.request.input(to='', subject='', content='')
-    user_to = User.find_first('where t_emailaddr=?', i.to0)
+    user_to = User.find_first('where t_emailaddr=?', i.to)
     to_id = user_to.t_uid
-    from_id = ctx.request.user.id
+    from_id = ctx.request.user.t_uid
     subject = validSecureData(i.subject)
     content = validSecureData(i.content)
     msg = Message(t_to=to_id, t_from=from_id, t_title=subject, t_content=content, t_read=0, t_time=time.time())
@@ -231,7 +231,7 @@ def receive_message():
         return dict()
     uid = user.t_uid
     total = Message.count_by('where t_to=?', uid)
-    page = Page(total, page_index=_get_page_index())
+    page = Page(total, page_index=_get_page_index(), page_size=5)
     msg_list = Message.find_by('where t_to=? order by t_time desc limit ?,?', uid, page.offset, page.limit)
     messages = list()
     for m in msg_list:
@@ -242,6 +242,74 @@ def receive_message():
         messages.append(m)
 
     return dict(messages=messages, page=page)
+
+@api
+@get('/api/friends/get')
+def api_get_friendlist():
+    current_user = ctx.request.user
+    friends_dataobj = PeerList.find_first('where t_uid=?', current_user.t_uid)
+    friends_str = friends_dataobj.t_friends
+    flist = re.split(';', friends_str)
+    friends = list()
+    for uid in flist:
+        u = User.find_first('where t_uid=?', uid)
+        if u is None:
+            continue
+        friends.append(u)
+    return dict(user=current_user, friends=friends)
+
+@api
+@post('/api/friends/add')
+def api_add_friend():
+    current_user = ctx.request.user
+    current_peerlist = PeerList.find_first('where t_uid=?', current_user.t_uid)
+    i = ctx.request.input(email='')
+    target_email = validSecureData(i.email)
+    if not target_email:
+        raise APIValueError('email', 'Empty email address')
+    target_user = User.find_first('where t_emailaddr=?', target_email)
+    if target_user is None:
+        raise APIValueError('email', 'User doesn\'t exist.')
+    current_peerlist.t_friends += (';' + str(target_user.t_uid))
+    current_peerlist.update()
+    return dict()
+
+@api
+@post('/api/friends/del')
+def api_del_friend():
+    current_user = ctx.request.user
+    current_peerlist = PeerList.find_first('where t_uid=?', current_user.t_uid)
+    i = ctx.request.input(email='')
+    target_email = validSecureData(i.email)
+    if not target_email:
+        raise APIValueError('email', 'Empty email address')
+    target_user = User.find_first('where t_emailaddr=?', target_email)
+    if target_user is None:
+        raise APIValueError('email', 'User doesn\'t exist.')
+    lst = re.split(';', current_peerlist.t_friends)
+    lst.remove(str(target_user.t_uid))
+    current_peerlist.t_friends = string.join(lst,';')
+    current_peerlist.update()
+    return dict()
+
+@api
+@post('/api/message/:msg_id/read')
+def api_mark_read(msg_id):
+    msg = Message.get(msg_id)
+    if msg is None:
+        raise NotFound()
+    msg.t_read = 1
+    msg.update()
+    return dict()
+
+@api
+@post('/api/message/:msg_id/delete')
+def api_delete_message(msg_id):
+    msg = Message.get(msg_id)
+    if msg is None:
+        raise NotFound()
+    msg.delete()
+    return dict()
 
 @api
 @get('/api/usrlist')
@@ -299,6 +367,16 @@ def edit_extension():
 @view('user_messages.html')
 @get('/peer/messages')
 def show_messages():
+    return dict(user=ctx.request.user)
+
+@view('user_friends.html')
+@get('/peer/friends')
+def view_friends():
+    return dict(user=ctx.request.user)
+
+@view('user_blocklist.html')
+@get('/peer/blocked')
+def view_blocklist():
     return dict(user=ctx.request.user)
 
 @view('user_pwd.html')

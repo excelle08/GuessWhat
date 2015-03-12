@@ -1,3 +1,4 @@
+
 {% extends '__base.html' %}
 
 {% block title %}Messages{% endblock %}
@@ -29,8 +30,10 @@
                 	gotoPage(this.page.page_index + 1);
             	},
             	reply_msg: function (msg) {
-            		$('#msg_target').val(msg.t_fromemail);
-            		$('#new_msg').show();
+            		var modal = $.UIkit.modal("#new_msg");
+                    modal.show();
+                    $('#msg_target').val(msg.t_fromemail);
+                    //$('#new_msg').show();
                	},
             	delete_msg: function (msg) {
                 	showConfirm('Confirm', 'Are you sure to remove this message?', function () {
@@ -47,7 +50,7 @@
                         	if (err) {
                             	return showError(err);
                         	}
-                        msg.t_read = 0
+                        msg.t_read = 1
                     });
             	}
         }
@@ -60,11 +63,12 @@ $(function(){                 //what does this code mean?
     		data: {
     			msg_to: '',
     			msg_title: '',
-    			msg_content: ''
+    			msg_content: '',
     		},
     		methods: {
     			submit: function(event){
     				event.preventDefault();
+                    this.msg_to = $('#msg_target').val()
     				if(!this.msg_to.trim()){
     					return showError('Please enter TO email address.');
     				}
@@ -79,7 +83,7 @@ $(function(){                 //what does this code mean?
     				}
     				startLoading();
     				postApi('/api/message/send', {
-    					to: this.msg_to.trim.toLowerCase(),
+    					to: this.msg_to.trim().toLowerCase(),
     					subject: this.msg_title.trim(),
     					content: this.msg_content,
 
@@ -88,7 +92,7 @@ $(function(){                 //what does this code mean?
     						showError(err);
     					}
     					else{
-    						return location.assign('/');
+    						return location.reload();
     					}
     					stopLoading();
     				});
@@ -162,19 +166,22 @@ $(function() {
 		
 	</div>
 	<div class="uk-width-1-1">
-		<div class="uk-panel uk-panel-box" v-repeat="msg: messages">
-			<article class="uk-article">
-				<h3 class="uk-article-title" v-text="msg.t_title"></h3>
-				<span v-if="! msg.t_read" class="uk-badge uk-badge-danger">New</span>
-				<a class="uk-article-meta" target="_bladnk" v-attr="href: '/user/'+msg.t_fromid" v-text="'From '+msg.t_from+' at '+msg.t_time|datetime"></a>
-				<hr class="uk-article-divider">
-				<p v-text="msg.t_content"></p>
-				<a href="#0" v-on="click: reply_msg(msg)"><i class="uk-icon-reply"> Reply</i></a>
-                <a href="#0" v-on="click: delete_msg(msg)"><i class="uk-icon-trash-o"> Delete</i></a>
-                <a href="#0" v-if="!msg.t_read" v-on="click: mark_as_read(msg)"><i class="uk-icon-check"></i>Mark as read</a>
-			</article>
+		<div v-repeat="msg: messages">
+            <div class="uk-panel uk-panel-box">
+			     <article class="uk-article">
+				    <p class="uk-article-title" v-text="msg.t_title" style="font-size: 24px; margin-top: 0px; margin-bottom: 0px"></p>
+				    <span v-if="! msg.t_read" class="uk-badge uk-badge-danger">New</span>
+				    <a class="uk-article-meta" target="_bladnk" v-attr="href: '/user/'+msg.t_fromid" v-text="'From '+msg.t_from+' at '+msg.t_time.toDateTime()"></a>
+				    <hr class="uk-article-divider" style="margin-bottom: 0px; margin-top: 0px">
+				    <p v-text="msg.t_content"></p>
+				    <a href="#0" v-on="click: reply_msg(msg)"><i class="uk-icon-reply"> Reply | </i></a>
+                    <a href="#0" v-on="click: delete_msg(msg)"><i class="uk-icon-trash-o"> Delete </i></a>
+                    <a href="#0" v-if="!msg.t_read" v-on="click: mark_as_read(msg)">| <i class="uk-icon-check"></i>Mark as read</a>
+			     </article>
+             </div>
+             <br />
 		</div>
-		<br />
+		<br />h
 
 		<div class="uk-width-1-1 uk-text-center">
             <ul class="uk-pagination">
