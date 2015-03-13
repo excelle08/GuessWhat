@@ -61,7 +61,7 @@ def validSecureData(data, field='the field'):
 def _get_page_index():
     page_index = 1
     try:
-        page_index = int(ctx.request.get('page'))
+        page_index = int(ctx.request.get('page', '1'))
     except ValueError:
         pass
     return page_index
@@ -250,13 +250,15 @@ def api_get_friendlist():
     friends_dataobj = PeerList.find_first('where t_uid=?', current_user.t_uid)
     friends_str = friends_dataobj.t_friends
     flist = re.split(';', friends_str)
+    count = len(flist)
+    page = Page(count, _get_page_index(), page_size=5)
     friends = list()
     for uid in flist:
-        u = User.find_first('where t_uid=?', uid)
+        u = User.find_first('where t_uid=? order by t_uid desc limit ?,?', uid, page.offset, page.limit)
         if u is None:
             continue
         friends.append(u)
-    return dict(user=current_user, friends=friends)
+    return dict(user=current_user, friends=friends, page=page)
 
 @api
 @post('/api/friends/add')
