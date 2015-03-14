@@ -24,10 +24,10 @@
         	},
         	methods: {
             	previous: function () {
-                	gotoPage(this.page.page_index - 1);
+                	gotoPage(this.page.page_index -= 1);
             	},
             	next: function () {
-                	gotoPage(this.page.page_index + 1);
+                	gotoPage(this.page.page_index += 1);
             	},
             	reply_msg: function (msg) {
             		var modal = $.UIkit.modal("#new_msg");
@@ -57,52 +57,9 @@
     });
 }
 
-$(function(){                 //what does this code mean?
-    	var vm = new Vue({
-    		el: '#new_message',
-    		data: {
-    			msg_to: '',
-    			msg_title: '',
-    			msg_content: '',
-    		},
-    		methods: {
-    			submit: function(event){
-    				event.preventDefault();
-                    this.msg_to = $('#msg_target').val()
-    				if(!this.msg_to.trim()){
-    					return showError('Please enter TO email address.');
-    				}
-    				if(!validateEmail(this.msg_to.trim())){
-    					return showError('Invalid email address.');
-    				}
-    				if(!this.msg_title){
-    					return showError('Please enter a subject');
-    				}
-    				if(!this.msg_content){
-    					return showError('Please enter content.');
-    				}
-    				startLoading();
-    				postApi('/api/message/send', {
-    					to: this.msg_to.trim().toLowerCase(),
-    					subject: this.msg_title.trim(),
-    					content: this.msg_content,
-
-    				}, function(err, r){
-    					if(err){
-    						showError(err);
-    					}
-    					else{
-    						return location.reload();
-    					}
-    					stopLoading();
-    				});
-    			}
-    		}
-    	});
-    });
 
 $(function() {
-    getApi('/api/message/recv?page={{ page.page_index }}', function (err, results) {
+    getApi('/api/message/recv?page={{ page_index }}' , function (err, results) {
         if (err) {
             return showError(err);
         }
@@ -110,6 +67,51 @@ $(function() {
         initVM(results);
     });
 });
+
+
+$(function(){                 //what does this code mean?
+        var vm = new Vue({
+            el: '#new_message',
+            data: {
+                msg_to: '',
+                msg_title: '',
+                msg_content: '',
+            },
+            methods: {
+                submit: function(event){
+                    event.preventDefault();
+                    this.msg_to = $('#msg_target').val()
+                    if(!this.msg_to.trim()){
+                        return showError('Please enter TO email address.');
+                    }
+                    if(!validateEmail(this.msg_to.trim())){
+                        return showError('Invalid email address.');
+                    }
+                    if(!this.msg_title){
+                        return showError('Please enter a subject');
+                    }
+                    if(!this.msg_content){
+                        return showError('Please enter content.');
+                    }
+                    startLoading();
+                    postApi('/api/message/send', {
+                        to: this.msg_to.trim().toLowerCase(),
+                        subject: this.msg_title.trim(),
+                        content: this.msg_content,
+
+                    }, function(err, r){
+                        if(err){
+                            showError(err);
+                        }
+                        else{
+                            return location.reload();
+                        }
+                        stopLoading();
+                    });
+                }
+            }
+        });
+    });
 
 </script>
 

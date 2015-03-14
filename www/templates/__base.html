@@ -35,6 +35,9 @@
                         <a href="#0"><i class="uk-icon-user"></i> {{ user.t_username }}</a>
                         <div class="uk-dropdown uk-dropdown-navbar">
                             <ul class="uk-nav uk-nav-navbar">
+                                {% if user.t_privilege %}
+                                <li><a href="/admincp"><i class="uk-icon-cog"></i> Manage</a></li>
+                                {% endif %}
                                 <li><a href="/signout"><i class="uk-icon-sign-out"></i> Log Out</a></li>
                             </ul>
                         </div>

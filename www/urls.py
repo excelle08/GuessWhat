@@ -91,11 +91,11 @@ def user_interceptor(next):
     ctx.request.usrext = usrext
     return next()
 
-@interceptor('/admin')
-@interceptor('/admin/')
+@interceptor('/admincp')
+@interceptor('/admincp/')
 def admin_interceptor(next):
     user = ctx.request.user
-    if user and user.t_privilege > 2:
+    if user and user.t_privilege:
         return next()
     raise SeeOther('/')
 
@@ -385,3 +385,12 @@ def view_blocklist():
 @get('/user/password')
 def change_password():
     return dict(user=ctx.request.user)
+
+@view('user_info.html')
+@get('/user/:userid')
+def view_user_info(userid):
+    u = User.get(userid)
+    u_ext = UserExt.get(userid)
+    if u is None:
+        raise NotFound()
+    return dict(user=ctx.request.user, u=u, ext=u_ext)

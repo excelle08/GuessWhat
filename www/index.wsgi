@@ -44,6 +44,6 @@ wsgi.add_interceptor(urls.admin_interceptor)
 wsgi.add_module(urls)
 
 if __name__ == '__main__':
-    wsgi.run(port=9001, host='0.0.0.0')
+    wsgi.run(port=9000, host='0.0.0.0')
 else:
     application = wsgi.get_wsgi_application()

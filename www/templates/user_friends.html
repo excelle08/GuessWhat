@@ -217,8 +217,8 @@ $(function() {
                 <div class="uk-width-5-6">
                     <h3 class="uk-article-title" style="font-size: 18px" v-text="user.t_username"><i class="uk-icon-male uk-icon-medium" v-if="user.t_gender"></i><i class="uk-icon-female uk-icon-medium" v-if="! user.t_gender"></i></h3>
                     <p v-text="user.t_motto"></p>
-                    <a href="#0" v-on="click: view_info(user)"><i class="uk-icon-reply"> View info | </i></a>
-                    <a href="#0" v-on="click: send_message(user)"><i class="uk-icon-trash-o"> Send message | </i></a>
+                    <a href="#0" v-on="click: view_info(user)"><i class="uk-icon-info-circle"> View info | </i></a>
+                    <a href="#0" v-on="click: send_message(user)"><i class="uk-icon-mail-forward"> Send message | </i></a>
                     <a href="#0" v-on="click: remove(user)"><i class="uk-icon-trash-o"></i> Remove</a>
                 </div>
                 </div>
